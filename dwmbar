@@ -1,0 +1,66 @@
+#!/bin/sh
+
+DELIMITER="  "
+
+add() {
+	BAR="$1$BAR"
+}
+
+declare -i timeM_interval=60
+declare -i timeM_timer=60
+timeM() {
+	if [ "$timeM_timer" -ge "$timeM_interval" ]; then
+		_time="$(echo -ne "\x01 $(date '+%H:%M')")"
+		timeM_timer=0
+	fi
+	add "$_time"
+	timeM_timer=$((timeM_timer+1))
+}
+
+declare -i dateM_interval=60
+declare -i dateM_timer=60
+dateM() {
+	if [ "$dateM_timer" -ge "$dateM_interval" ]; then
+		_date="$(echo -ne "\x02 $(date '+%Y-%m-%d')")"
+		dateM_timer=0
+	fi
+	add "$_date"
+	dateM_timer=$((dateM_timer+1))
+}
+
+declare -i duM_interval=60
+declare -i duM_timer=60
+duM() {
+	if [ "$duM_timer" -ge "$duM_interval" ]; then
+		_du="$(echo -ne "\x03 $(df -h / | awk 'NR==2 {print $4}')")"
+		duM_timer=0
+	fi
+	add "$_du"
+	duM_timer=$((duM_timer+1))
+}
+
+declare -i dusM_interval=60
+declare -i dusM_timer=60
+dusM() {
+	if [ "$dusM_timer" -ge "$dusM_interval" ]; then
+		_dus="$(echo -ne "\x04 $(df -h /media/files | awk 'NR==2 {print $4}')")"
+		dusM_timer=0
+	fi
+	add "$_dus"
+	dusM_timer=$((dusM_timer+1))
+}
+
+[ "$(pgrep -xc dwmbar)" -ge 2 ] && echo "dwmbar is already running" && exit 1
+
+while true; do
+	BAR=""
+	timeM
+	add "$DELIMITER"
+	dateM
+	add "$DELIMITER"
+	duM
+	add "$DELIMITER"
+	dusM
+	xsetroot -name "$BAR"
+	sleep 1;
+done
