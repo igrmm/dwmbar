@@ -43,7 +43,7 @@ declare -i dusM_interval=60
 declare -i dusM_timer=60
 dusM() {
 	if [ "$dusM_timer" -ge "$dusM_interval" ]; then
-		_dus="$(echo -ne "\x04 $(df -h /media/files | awk 'NR==2 {print $4}')")"
+		_dus="$(echo -ne "\x04 $(df -h ~/files | awk 'NR==2 {print $4}')")"
 		dusM_timer=0
 	fi
 	add "$_dus"
