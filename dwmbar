@@ -1,28 +1,79 @@
 #!/bin/sh
 
 DELIMITER="  "
+LOGPATH="/tmp/dwmbarlog"
 
-add() {
-	if [ "$1" = "-d" ]; then
-		BAR="$2$DELIMITER$BAR"
+MAIN() {
+	case "$1" in
+		TIMEDATE)
+			TIMEDATE "$2"
+			;;
+	esac
+}
+
+TIMEDATE_FETCH() {
+	LOG "Fetching TIMEDATE..."
+	[ ! -p /tmp/dwmbar ] && mkfifo /tmp/dwmbar && LOG "mkfifo"
+	echo -e "DWMBAR_TIMEDATE=\"$(date '+%Y-%m-%d;%H:%M')"\" >> /tmp/dwmbar
+	LOG "TIMEDATE fetched."
+	exit
+}
+
+TIMEDATE_PRINT() {
+	if [ -n "$DWMBAR_TIMEDATE" ]; then
+		TIME="$(echo $DWMBAR_TIMEDATE | sed 's/^.*;//')"
+		DATE="$(echo $DWMBAR_TIMEDATE | sed 's/;.*//')"
+		echo -ne "\x02 $DATE$DELIMITER\x01 $TIME"
 	else
-		BAR="$1$BAR"
+		LOG "!TIMEDATE"
 	fi
 }
 
-TIME() {
-	if [ -n "$DWMBAR_TIME" ]; then
-		echo -ne "\x01 $DWMBAR_TIME"
+TIMEDATE() {
+	case "$1" in
+		--fetch)
+			TIMEDATE_FETCH
+			;;
+		*)
+			TIMEDATE_PRINT
+			;;
+	esac
+}
+
+IMPORT_FIFO() {
+	if [ ! -p /tmp/dwmbar ]; then
+		xsetroot -name "cant find /tmp/dwmbar!"
+		LOG "cant find /tmp/dwmbar!"
+		exit
 	else
-		echo -ne "\x01 !E"
+		LOG "importing /tmp/dwmbar..."
+		source /tmp/dwmbar
+		LOG ".../tmp/dwmbar imported."
 	fi
 }
 
-[ "$(pgrep -xc dwmbar)" -ge 2 ] && echo "dwmbar is already running" && exit 1
+BAR() {
+	BAR="$(TIMEDATE)"
+	echo "$BAR"
+}
 
-while true; do
-	BAR=""
-	add "$(TIME)"
-	xsetroot -name "$BAR"
-	sleep 1;
-done
+LOG() {
+	echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> $LOGPATH
+	echo "$1"
+}
+
+MAIN "$@"
+
+if mkdir /tmp/dwmbar.lock >/dev/null 2>&1; then
+	LOG "Starting dwmbar main loop..."
+	xsetroot -name "Starting dwmbar main loop..."
+	[ ! -p /tmp/dwmbar ] && mkfifo /tmp/dwmbar
+	while [ -d /tmp/dwmbar.lock ]; do
+		IMPORT_FIFO
+		xsetroot -name "$(BAR)"
+	done
+	LOG "exiting dwmbar"
+	exit
+else
+	LOG "dwmbar is already running!"
+fi
