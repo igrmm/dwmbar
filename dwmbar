@@ -14,6 +14,9 @@ MAIN() {
 		DFFILES)
 			DFFILES "$2"
 			;;
+		VOLUME)
+			VOLUME "$2"
+			;;
 	esac
 }
 
@@ -102,6 +105,39 @@ DFFILES() {
 	esac
 }
 
+VOLUME_FETCH() {
+	LOG "Fetching VOLUME..."
+	[ ! -p /tmp/dwmbar ] && mkfifo /tmp/dwmbar && LOG "mkfifo"
+	while true; do
+		DWMBAR_VOLUME="$(amixer sget Master | awk -F"[][]" '/dB/ { print $2 }')"
+		[ -n "$DWMBAR_VOLUME" ] && break
+		LOG "waiting VOLUME..."
+		sleep 1;
+	done
+	echo -e "DWMBAR_VOLUME=\"$DWMBAR_VOLUME\"" >> /tmp/dwmbar
+	LOG "VOLUME fetched."
+	exit
+}
+
+VOLUME_PRINT() {
+	if [ -n "$DWMBAR_VOLUME" ]; then
+		echo -ne "\x05 $DWMBAR_VOLUME"
+	else
+		LOG "!VOLUME"
+	fi
+}
+
+VOLUME() {
+	case "$1" in
+		--fetch)
+			VOLUME_FETCH
+			;;
+		*)
+			VOLUME_PRINT
+			;;
+	esac
+}
+
 IMPORT_FIFO() {
 	if [ ! -p /tmp/dwmbar ]; then
 		xsetroot -name "cant find /tmp/dwmbar!"
@@ -118,6 +154,7 @@ BAR() {
 	BAR="$(TIMEDATE)"
 	BAR="$(DFROOT)$DELIMITER$BAR"
 	BAR="$(DFFILES)$DELIMITER$BAR"
+	BAR="$(VOLUME)$DELIMITER$BAR"
 	echo "$BAR"
 }
 
