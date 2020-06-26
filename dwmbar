@@ -17,6 +17,12 @@ MAIN() {
 		VOLUME)
 			VOLUME "$2"
 			;;
+		FETCHALL)
+			TIMEDATE --fetch &
+			DFROOT --fetch &
+			DFFILES --fetch &
+			VOLUME --fetch &
+			exit
 	esac
 }
 
@@ -108,12 +114,7 @@ DFFILES() {
 VOLUME_FETCH() {
 	LOG "Fetching VOLUME..."
 	[ ! -p /tmp/dwmbar ] && mkfifo /tmp/dwmbar && LOG "mkfifo"
-	while true; do
-		DWMBAR_VOLUME="$(amixer sget Master | awk -F"[][]" '/dB/ { print $2 }')"
-		[ -n "$DWMBAR_VOLUME" ] && break
-		LOG "waiting VOLUME..."
-		sleep 1;
-	done
+	DWMBAR_VOLUME="$(amixer sget Master | awk -F"[][]" '/dB/ { print $2 }')"
 	echo -e "DWMBAR_VOLUME=\"$DWMBAR_VOLUME\"" >> /tmp/dwmbar
 	LOG "VOLUME fetched."
 	exit
