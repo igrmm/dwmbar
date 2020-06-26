@@ -8,6 +8,12 @@ MAIN() {
 		TIMEDATE)
 			TIMEDATE "$2"
 			;;
+		DFROOT)
+			DFROOT "$2"
+			;;
+		DFFILES)
+			DFFILES "$2"
+			;;
 	esac
 }
 
@@ -40,6 +46,62 @@ TIMEDATE() {
 	esac
 }
 
+DFROOT_FETCH() {
+	LOG "Fetching DFROOT..."
+	[ ! -p /tmp/dwmbar ] && mkfifo /tmp/dwmbar && LOG "mkfifo"
+	DWMBAR_DFROOT="$(df -h / | awk 'NR==2 {print $4}')"
+	echo -e "DWMBAR_DFROOT=\"$DWMBAR_DFROOT\"" >> /tmp/dwmbar
+	LOG "DFROOT fetched."
+	exit
+}
+
+DFROOT_PRINT() {
+	if [ -n "$DWMBAR_DFROOT" ]; then
+		echo -ne "\x03 $DWMBAR_DFROOT"
+	else
+		LOG "!DFROOT"
+	fi
+}
+
+DFROOT() {
+	case "$1" in
+		--fetch)
+			DFROOT_FETCH
+			;;
+		*)
+			DFROOT_PRINT
+			;;
+	esac
+}
+
+DFFILES_FETCH() {
+	LOG "Fetching DFFILES..."
+	[ ! -p /tmp/dwmbar ] && mkfifo /tmp/dwmbar && LOG "mkfifo"
+	DWMBAR_DFFILES="$(df -h ~/files | awk 'NR==2 {print $4}')"
+	echo -e "DWMBAR_DFFILES=\"$DWMBAR_DFFILES\"" >> /tmp/dwmbar
+	LOG "DFFILES fetched."
+	exit
+}
+
+DFFILES_PRINT() {
+	if [ -n "$DWMBAR_DFFILES" ]; then
+		echo -ne "\x04 $DWMBAR_DFFILES"
+	else
+		LOG "!DFFILES"
+	fi
+}
+
+DFFILES() {
+	case "$1" in
+		--fetch)
+			DFFILES_FETCH
+			;;
+		*)
+			DFFILES_PRINT
+			;;
+	esac
+}
+
 IMPORT_FIFO() {
 	if [ ! -p /tmp/dwmbar ]; then
 		xsetroot -name "cant find /tmp/dwmbar!"
@@ -54,6 +116,8 @@ IMPORT_FIFO() {
 
 BAR() {
 	BAR="$(TIMEDATE)"
+	BAR="$(DFROOT)$DELIMITER$BAR"
+	BAR="$(DFFILES)$DELIMITER$BAR"
 	echo "$BAR"
 }
 
