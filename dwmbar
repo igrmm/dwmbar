@@ -45,7 +45,7 @@ TIMEDATE_PRINT() {
 }
 
 TIMEDATE_CLICK() {
-	[ "$1" = 1 ] && st -n _dwmbar_ -e sh -c 'cal -y; read' && exit
+	[ "$1" = 1 ] && st -c _dwmbar_ -e sh -c 'cal -y; read' && exit
 }
 
 TIMEDATE() {
