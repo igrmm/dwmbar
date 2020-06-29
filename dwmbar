@@ -49,7 +49,7 @@ TIMEDATE_CLICK() {
 	if [ -n "$windowid" ]; then
 		xdotool windowclose "$windowid"
 	elif [ "$1" = 1 ]; then
-		st -c _dwmbar_timedate -e sh -c 'cal -y; read' &
+		st -c _dwmbar_timedate -g 66x35+624+184 -e sh -c 'cal -y; read'
 		exit
 	fi
 }
