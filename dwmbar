@@ -47,7 +47,7 @@ TIMEDATE_PRINT() {
 TIMEDATE_CLICK() {
 	windowid="$(xdotool search --maxdepth 1 --onlyvisible --class "_dwmbar_")"
 	if [ -n "$windowid" ]; then
-		xdotool windowclose "$windowid"
+		xdotool windowkill "$windowid"
 	elif [ "$1" = 1 ]; then
 		st -c _dwmbar_timedate -g 66x35+624+184 -e sh -c 'cal -y; read'
 		exit
