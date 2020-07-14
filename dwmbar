@@ -17,6 +17,9 @@ MAIN() {
 		VOLUME)
 			VOLUME "$2"
 			;;
+		PACKAGES)
+			PACKAGES "$2"
+			;;
 		FETCHALL)
 			TIMEDATE --fetch &
 			DFROOT --fetch &
@@ -152,6 +155,34 @@ VOLUME() {
 	esac
 }
 
+PACKAGES_FETCH() {
+	LOG "Fetching PACKAGES..."
+	[ ! -p /tmp/dwmbar ] && mkfifo /tmp/dwmbar && LOG "mkfifo"
+	DWMBAR_PACKAGES="$(checkupdates | wc -l)"
+	echo -e "DWMBAR_PACKAGES=\"$DWMBAR_PACKAGES\"" >> /tmp/dwmbar
+	LOG "PACKAGES fetched."
+	exit
+}
+
+PACKAGES_PRINT() {
+	if [ -n "$DWMBAR_PACKAGES" ]; then
+		echo -ne "\x06 $DWMBAR_PACKAGES"
+	else
+		LOG "!PACKAGES"
+	fi
+}
+
+PACKAGES() {
+	case "$1" in
+		--fetch)
+			PACKAGES_FETCH
+			;;
+		*)
+			PACKAGES_PRINT
+			;;
+	esac
+}
+
 IMPORT_FIFO() {
 	if [ ! -p /tmp/dwmbar ]; then
 		xsetroot -name "cant find /tmp/dwmbar!"
@@ -169,6 +200,7 @@ BAR() {
 	BAR="$(DFROOT)$DELIMITER$BAR"
 	BAR="$(DFFILES)$DELIMITER$BAR"
 	BAR="$(VOLUME)$DELIMITER$BAR"
+	[ -n "$DWMBAR_PACKAGES" ] && BAR="$(PACKAGES)$DELIMITER$BAR"
 	echo "$BAR"
 }
 
